@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your Profile"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Personal Information Section -->
+        <TextView
+            android:id="@+id/tvPersonalInfoTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Personal Information"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Name"
+            app:layout_constraintTop_toBottomOf="@id/tvPersonalInfoTitle">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:contentDescription="Enter your name" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Email"
+            app:layout_constraintTop_toBottomOf="@id/tilName">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:contentDescription="Enter your email address" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Health Conditions Section -->
+        <TextView
+            android:id="@+id/tvHealthConditionsTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Health Conditions"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/tilEmail" />
+
+        <TextView
+            android:id="@+id/tvHealthConditionsDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Select all that apply to you:"
+            app:layout_constraintTop_toBottomOf="@id/tvHealthConditionsTitle" />
+
+        <CheckBox
+            android:id="@+id/cbDiabetes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Diabetes"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/tvHealthConditionsDesc" />
+
+        <CheckBox
+            android:id="@+id/cbLiverSteatosis"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Non-alcoholic Fatty Liver Disease"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/cbDiabetes" />
+
+        <CheckBox
+            android:id="@+id/cbHypertension"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hypertension"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/cbLiverSteatosis" />
+
+        <CheckBox
+            android:id="@+id/cbHighCholesterol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="High Cholesterol"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/cbHypertension" />
+
+        <CheckBox
+            android:id="@+id/cbCeliac"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Celiac Disease"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/cbHighCholesterol" />
+
+        <!-- Custom Conditions Section -->
+        <TextView
+            android:id="@+id/tvCustomConditionsTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Other Health Conditions"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/cbCeliac" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilCustomConditions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Enter one condition per line"
+            app:layout_constraintTop_toBottomOf="@id/tvCustomConditionsTitle">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etCustomConditions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="3"
+                android:gravity="top|start"
+                android:contentDescription="Enter your other health conditions" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Save Profile"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/tilCustomConditions" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnSave" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

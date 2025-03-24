@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.feri.healthydiet.ui.dashboard.DashboardFragment"
+        android:label="Dashboard" />
+
+    <fragment
+        android:id="@+id/menuScanFragment"
+        android:name="com.feri.healthydiet.ui.menuscan.MenuScanFragment"
+        android:label="Menu Scanner">
+        <action
+            android:id="@+id/actionMenuScanFragmentToResultsFragment"
+            app:destination="@id/resultsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/resultsFragment"
+        android:name="com.feri.healthydiet.ui.menuscan.ResultsFragment"
+        android:label="Analysis Results">
+        <argument
+            android:name="analysisResult"
+            app:argType="com.feri.healthydiet.ui.menuscan.MenuAnalysisResult" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/foodAnalyzerFragment"
+        android:name="com.feri.healthydiet.ui.foodanalyzer.FoodAnalyzerFragment"
+        android:label="Food Analyzer" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.feri.healthydiet.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.feri.healthydiet.ui.history.HistoryFragment">
+        <action
+            android:id="@+id/actionHistoryFragmentToHistoryDetailFragment"
+            app:destination="@id/historyDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/historyDetailFragment"
+        android:name="com.feri.healthydiet.ui.history.HistoryDetailFragment"
+        android:label="History Detail">
+        <argument
+            android:name="historyItem"
+            app:argType="com.feri.healthydiet.data.model.AnalysisHistory" />
+    </fragment>
+</navigation>

@@ -1,0 +1,76 @@
+# Fișiere generate de Gradle
+.gradle/
+build/
+/*/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Fișiere locale de configurare
+local.properties
+gradle.properties
+
+# Fișiere IDE
+*.iml
+.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/misc.xml
+.navigation/
+.idea/protoeditor.xml
+
+# Fișiere pentru MacOS
+.DS_Store
+
+# Fișiere pentru Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Fișiere din Android Studio
+*.log
+.navigation/
+/*/out
+
+# Fișiere NDK
+obj/
+
+# Rezultate de testare
+/*/test-results
+
+# Chei și configurații sensibile (asigură-te că acestea sunt incluse)
+*.jks
+*.keystore
+google-services.json
+firebase-*.json
+
+# Extensii Kotlin
+kotlin-profile-*.json
+
+# Proguard
+proguard/
+
+# Fișiere JetBrains MotionLayout Timeline
+timeline/
+
+# VS Code
+.vscode/
+
+# Gradle Wrapper
+!gradle/wrapper/gradle-wrapper.jar
+
+# Fișiere temporare
+*.tmp
+*.temp
+*.bak

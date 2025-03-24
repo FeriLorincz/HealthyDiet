@@ -1,0 +1,33 @@
+<resources>
+
+    <string name="app_name">HealthyDiet</string>
+
+    <!-- Bottom Navigation -->
+    <string name="title_home">Home</string>
+    <string name="title_scan">Scan Menu</string>
+    <string name="title_analyze">Analyze Food</string>
+    <string name="title_history">History</string>
+    <string name="title_profile">Profile</string>
+
+    <!-- Common -->
+    <string name="category_format">Category: %s</string>
+    <string name="protein_format">%sg</string>
+    <string name="carbs_format">%sg</string>
+    <string name="fats_format">%sg</string>
+    <string name="impact_bullet">• %s</string>
+    <string name="error_displaying">Error displaying analysis: %s</string>
+
+    <!-- Food Categories -->
+    <string name="recommended">Recommended</string>
+    <string name="moderate">In Moderation</string>
+    <string name="avoid">Avoid</string>
+
+    <!-- Actions -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="analyze">Analyze</string>
+    <string name="capture">Capture</string>
+    <string name="upload">Upload</string>
+    <string name="read_results">Read Results</string>
+    <string name="stop_reading">Stop Reading</string>
+</resources>
