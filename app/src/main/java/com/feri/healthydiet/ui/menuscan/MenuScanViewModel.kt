@@ -10,6 +10,7 @@ import com.feri.healthydiet.data.model.HealthProfile
 import com.feri.healthydiet.data.remote.AnthropicRequest
 import com.feri.healthydiet.data.remote.AnthropicService
 import com.feri.healthydiet.data.remote.Message
+import com.feri.healthydiet.data.repository.AnalysisRepository
 import com.feri.healthydiet.data.repository.HistoryRepository
 import com.feri.healthydiet.data.repository.UserRepository
 import com.feri.healthydiet.util.Constants

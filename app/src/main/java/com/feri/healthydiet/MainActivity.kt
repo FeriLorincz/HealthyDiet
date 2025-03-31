@@ -1,47 +1,59 @@
 package com.feri.healthydiet
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.feri.healthydiet.ui.theme.HealthyDietTheme
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.navigation.ui.setupWithNavController
+import com.feri.healthydiet.databinding.ActivityMainBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            HealthyDietTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // Setarea navigării dacă avem bottom navigation
+       // setupNavigation()
+
+        try {
+            setupNavigation()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error setting up navigation: ${e.message}")
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private fun setupNavigation() {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
+        val navController = navHostFragment.navController
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HealthyDietTheme {
-        Greeting("Android")
+        val appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.dashboardFragment, R.id.menuScanFragment,
+                R.id.foodAnalyzerFragment, R.id.historyFragment, R.id.profileFragment
+            )
+        )
+
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        binding.navView.setupWithNavController(navController)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return try {
+            val navController = findNavController(R.id.nav_host_fragment_activity_main)
+            navController.navigateUp() || super.onSupportNavigateUp()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Navigation error: ${e.message}")
+            super.onSupportNavigateUp()
+        }
     }
 }
