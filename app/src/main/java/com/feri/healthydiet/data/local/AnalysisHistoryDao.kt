@@ -8,7 +8,6 @@ import com.feri.healthydiet.data.model.AnalysisHistory
 
 @Dao
 interface AnalysisHistoryDao {
-
     @Query("SELECT * FROM analysis_history WHERE userId = :userId ORDER BY createdAt DESC")
     suspend fun getHistoryForUser(userId: String): List<AnalysisHistory>
 

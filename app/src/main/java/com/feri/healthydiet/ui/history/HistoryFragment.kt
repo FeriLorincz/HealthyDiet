@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.feri.healthydiet.databinding.FragmentHistoryBinding
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -41,21 +42,20 @@ class HistoryFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = HistoryAdapter { historyItem ->
-            // Navigate to detail view with the selected history item
             val action = HistoryFragmentDirections.actionHistoryFragmentToHistoryDetailFragment(historyItem)
             findNavController().navigate(action)
         }
 
-        binding.rvHistory.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = this@HistoryFragment.adapter
-        }
+        binding.rvHistory.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvHistory.adapter = adapter
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.uiState.collect { state ->
-                if (state.historyItems.isEmpty()) {
+                binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+
+                if (state.historyItems.isEmpty() && !state.isLoading) {
                     binding.tvEmptyHistory.visibility = View.VISIBLE
                     binding.rvHistory.visibility = View.GONE
                 } else {
@@ -63,8 +63,6 @@ class HistoryFragment : Fragment() {
                     binding.rvHistory.visibility = View.VISIBLE
                     adapter.submitList(state.historyItems)
                 }
-
-                binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
 
                 state.error?.let {
                     Toast.makeText(context, it, Toast.LENGTH_LONG).show()
