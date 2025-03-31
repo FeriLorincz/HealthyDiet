@@ -15,11 +15,11 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.feri.healthydiet.databinding.FragmentMenuScanBinding
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -30,7 +30,7 @@ class MenuScanFragment : Fragment() {
     private var _binding: FragmentMenuScanBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: MenuScanViewModel by viewModels()
+    private val viewModel: MenuScanViewModel by viewModel()
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService

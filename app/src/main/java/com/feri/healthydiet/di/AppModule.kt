@@ -2,6 +2,7 @@ package com.feri.healthydiet.di
 
 import com.feri.healthydiet.data.local.AppDatabase
 import com.feri.healthydiet.data.remote.AnthropicService
+import com.feri.healthydiet.data.repository.AnalysisRepository
 import com.feri.healthydiet.data.repository.HistoryRepository
 import com.feri.healthydiet.data.repository.UserRepository
 import com.feri.healthydiet.ui.dashboard.DashboardViewModel
@@ -58,6 +59,7 @@ val appModule = module {
     // Repositories
     single { UserRepository(get(), get()) }
     single { HistoryRepository(get()) }
+    single { AnalysisRepository(get(), get()) }
 
     // Helpers
     single { TextRecognitionHelper() }
