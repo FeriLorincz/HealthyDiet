@@ -1,7 +1,6 @@
 package com.feri.healthydiet.data.local
 
 import android.content.Context
-import androidx.databinding.adapters.Converters
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -14,17 +13,16 @@ import com.feri.healthydiet.data.model.User
     entities = [
         User::class,
         HealthProfile::class,
-        //FoodItem::class,
         AnalysisHistory::class
     ],
-    version = 1
+    version = 1,
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDao
     abstract fun healthProfileDao(): HealthProfileDao
-    //abstract fun foodItemDao(): FoodItemDao
     abstract fun analysisHistoryDao(): AnalysisHistoryDao
 
     companion object {

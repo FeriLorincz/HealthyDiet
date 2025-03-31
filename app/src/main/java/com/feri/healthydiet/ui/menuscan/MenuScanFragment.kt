@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import android.util.Log
 
 class MenuScanFragment : Fragment() {
 
@@ -33,9 +34,13 @@ class MenuScanFragment : Fragment() {
     private val viewModel: MenuScanViewModel by viewModel()
 
     private var imageCapture: ImageCapture? = null
+    private var camera: Camera? = null
+    private var cameraProvider: ProcessCameraProvider? = null
     private lateinit var cameraExecutor: ExecutorService
 
     private var currentPhotoUri: Uri? = null
+
+    private val TAG = "MenuScanFragment"
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -69,14 +74,12 @@ class MenuScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        if (allPermissionsGranted()) {
-            startCamera()
-        } else {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-        }
-
         binding.btnCapture.setOnClickListener {
-            takePhoto()
+            if (allPermissionsGranted()) {
+                takePhoto()
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
         }
 
         binding.btnUpload.setOnClickListener {
@@ -101,69 +104,137 @@ class MenuScanFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (allPermissionsGranted()) {
+            startCamera()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Oprește camera când fragmentul nu este vizibil
+        shutdownCamera()
+    }
+
+    private fun shutdownCamera() {
+        try {
+            // Eliberează resursele camerei
+            cameraProvider?.unbindAll()
+            camera = null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error shutting down camera: ${e.message}")
+        }
+    }
+
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        try {
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
-        cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            cameraProviderFuture.addListener({
+                try {
+                    // Obține furnizorul de cameră
+                    cameraProvider = cameraProviderFuture.get()
 
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            }
+                    // Unbind înainte de a configura din nou camera
+                    cameraProvider?.unbindAll()
 
-            imageCapture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                .build()
+                    // Set up the preview use case
+                    val preview = Preview.Builder()
+                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                        .build()
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                    preview.setSurfaceProvider(binding.viewFinder.surfaceProvider)
 
+                    // Set up the capture use case
+                    imageCapture = ImageCapture.Builder()
+                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                        .build()
+
+                    // Specify the camera (usually the back camera)
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                    // Bind use cases to camera
+                    camera = cameraProvider?.bindToLifecycle(
+                        viewLifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageCapture
+                    )
+
+                    // Setează parametri suplimentari pentru cameră
+                    setupCameraControls()
+
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error starting camera: ${e.message}")
+                    Toast.makeText(context, "Failed to start camera: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }, ContextCompat.getMainExecutor(requireContext()))
+        } catch (e: Exception) {
+            Log.e(TAG, "Camera initialization failed: ${e.message}")
+            Toast.makeText(context, "Camera initialization failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupCameraControls() {
+        camera?.cameraControl?.let { cameraControl ->
             try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture
-                )
+                // Setare AutoFocus continuu
+                cameraControl.setLinearZoom(0f) // Resetează zoom-ul
+
+                // Dacă ai nevoie de control suplimentar, adaugă aici
             } catch (e: Exception) {
-                Toast.makeText(context, "Camera initialization failed", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Error setting camera controls: ${e.message}")
             }
-        }, ContextCompat.getMainExecutor(requireContext()))
+        }
     }
 
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
 
-        val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US)
-            .format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-        }
+        try {
+            // Creează un nume de fișier bazat pe timestamp
+            val name = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US)
+                .format(System.currentTimeMillis())
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            }
 
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(
-            requireContext().contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        ).build()
+            val outputOptions = ImageCapture.OutputFileOptions.Builder(
+                requireContext().contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            ).build()
 
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    output.savedUri?.let {
-                        currentPhotoUri = it
-                        processMenuImage(it)
+            // Configurează captarea imaginii
+            imageCapture.takePicture(
+                outputOptions,
+                ContextCompat.getMainExecutor(requireContext()),
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                        output.savedUri?.let {
+                            currentPhotoUri = it
+                            Log.d(TAG, "Photo saved: $it")
+                            processMenuImage(it)
+                        }
+                    }
+
+                    override fun onError(exc: ImageCaptureException) {
+                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                        Toast.makeText(
+                            context,
+                            "Photo capture failed: ${exc.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
-
-                override fun onError(exc: ImageCaptureException) {
-                    Toast.makeText(
-                        context,
-                        "Photo capture failed: ${exc.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        )
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error taking photo: ${e.message}", e)
+            Toast.makeText(context, "Failed to take photo: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun processMenuImage(uri: Uri) {
@@ -171,8 +242,13 @@ class MenuScanFragment : Fragment() {
     }
 
     private fun navigateToResults(result: MenuAnalysisResult) {
-        val action = MenuScanFragmentDirections.actionMenuScanFragmentToResultsFragment(result)
-        findNavController().navigate(action)
+        try {
+            val action = MenuScanFragmentDirections.actionMenuScanFragmentToResultsFragment(result)
+            findNavController().navigate(action)
+        } catch (e: Exception) {
+            Log.e(TAG, "Navigation error: ${e.message}", e)
+            Toast.makeText(context, "Error navigating to results: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
@@ -182,6 +258,7 @@ class MenuScanFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         cameraExecutor.shutdown()
+        shutdownCamera()
         _binding = null
     }
 }

@@ -2,6 +2,7 @@ package com.feri.healthydiet.ui.menuscan
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.feri.healthydiet.data.model.AnalysisHistory
@@ -33,36 +34,88 @@ class MenuScanViewModel(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
+    private val TAG = "MenuScanViewModel"
     private val _uiState = MutableStateFlow(MenuScanUiState())
     val uiState: StateFlow<MenuScanUiState> = _uiState.asStateFlow()
 
     fun analyzeMenuImage(imageUri: Uri, context: Context) {
         viewModelScope.launch {
             try {
-                _uiState.value = _uiState.value.copy(isLoading = true)
+                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+                Log.d(TAG, "Starting text recognition from image")
 
                 // Extract text from image
-                val menuText = textRecognitionHelper.recognizeTextFromImage(imageUri, context)
+                val menuText = try {
+                    textRecognitionHelper.recognizeTextFromImage(imageUri, context)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error recognizing text: ${e.message}", e)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "Text recognition failed: ${e.message}"
+                    )
+                    return@launch
+                }
+
+                if (menuText.isBlank()) {
+                    Log.w(TAG, "No text detected in the image")
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "No text detected in the image. Please try another photo with clearer text."
+                    )
+                    return@launch
+                }
+
+                Log.d(TAG, "Text recognition successful, getting health profile")
 
                 // Get user health profile
                 val healthProfile = userRepository.getUserHealthProfile()
 
+                Log.d(TAG, "Creating AI analysis prompt")
+
                 // Create prompt for AI
                 val prompt = createMenuAnalysisPrompt(menuText, healthProfile)
 
+                Log.d(TAG, "Calling AI service")
+
                 // Call AI service
-                val response = anthropicService.analyzeFood(
-                    AnthropicRequest(
-                        model = Constants.DETAILED_MODEL,
-                        messages = listOf(Message("user", prompt))
+                val response = try {
+                    anthropicService.analyzeFood(
+                        AnthropicRequest(
+                            model = Constants.DETAILED_MODEL,
+                            messages = listOf(Message("user", prompt))
+                        )
                     )
-                )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error calling AI service: ${e.message}", e)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "AI analysis failed: ${e.message}"
+                    )
+                    return@launch
+                }
+
+                Log.d(TAG, "AI response received, parsing result")
 
                 // Parse response
-                val analysisResult = parseAIResponse(response.content.first().text)
+                val analysisResult = try {
+                    parseAIResponse(response.content.first().text)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing AI response: ${e.message}", e)
+                    createFallbackResult("Failed to analyze menu: ${e.message}")
+                }
+
+                Log.d(TAG, "Saving analysis to history")
 
                 // Save to history
-                saveToHistory(menuText, analysisResult)
+                try {
+                    saveToHistory(menuText, analysisResult)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error saving to history: ${e.message}", e)
+                    // Continue even if history saving fails
+                }
+
+                Log.d(TAG, "Analysis complete, updating UI")
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -70,6 +123,7 @@ class MenuScanViewModel(
                 )
 
             } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error in menu analysis: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "Analysis failed: ${e.message}"
@@ -88,8 +142,11 @@ class MenuScanViewModel(
         if (profile.hasCeliac) healthConditions.add("celiac disease")
         healthConditions.addAll(profile.customConditions)
 
+        val conditionsText = if (healthConditions.isEmpty()) "no specific health conditions"
+        else healthConditions.joinToString(", ")
+
         return """
-            I need help analyzing a restaurant menu for someone with ${healthConditions.joinToString(", ")}. 
+            I need help analyzing a restaurant menu for someone with $conditionsText.
             Here is the menu text:
             
             $menuText
@@ -107,19 +164,32 @@ class MenuScanViewModel(
 
     private fun parseAIResponse(responseText: String): MenuAnalysisResult {
         try {
-            // Basic parsing - in a real app, handle this more robustly
-            val jsonStr = responseText.substringAfter("```json").substringBefore("```")
-            return Gson().fromJson(jsonStr, MenuAnalysisResult::class.java)
+            // Parse JSON from AI response
+            // Look for JSON content within the response
+            val jsonPattern = """\{[\s\S]*\}""".toRegex()
+            val jsonMatch = jsonPattern.find(responseText)
+
+            if (jsonMatch != null) {
+                val jsonStr = jsonMatch.value
+                return try {
+                    Gson().fromJson(jsonStr, MenuAnalysisResult::class.java)
+                } catch (e: Exception) {
+                    Log.e(TAG, "JSON parsing error: ${e.message}", e)
+                    createFallbackResult("Error parsing AI response")
+                }
+            } else {
+                Log.e(TAG, "No JSON found in response")
+                return createFallbackResult("Could not extract structured data from AI response")
+            }
         } catch (e: Exception) {
-            // Fallback parsing if JSON extraction fails
-            return createFallbackResult(responseText)
+            Log.e(TAG, "Error in parseAIResponse: ${e.message}", e)
+            return createFallbackResult("Error processing AI response: ${e.message}")
         }
     }
 
-    private fun createFallbackResult(text: String): MenuAnalysisResult {
-        // Create a basic result when parsing fails
+    private fun createFallbackResult(errorMessage: String): MenuAnalysisResult {
         return MenuAnalysisResult(
-            recommended = listOf(FoodRecommendation("Parsing error", "Could not parse AI response")),
+            recommended = listOf(FoodRecommendation("Error processing menu", errorMessage)),
             avoid = emptyList(),
             moderate = emptyList()
         )
@@ -127,16 +197,25 @@ class MenuScanViewModel(
 
     private fun saveToHistory(menuText: String, result: MenuAnalysisResult) {
         viewModelScope.launch {
-            val userId = userRepository.getCurrentUserId()
-            val historyItem = AnalysisHistory(
-                id = UUID.randomUUID().toString(),
-                userId = userId,
-                type = AnalysisType.MENU,
-                name = "Menu Analysis ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}",
-                content = Gson().toJson(result),
-                createdAt = System.currentTimeMillis()
-            )
-            historyRepository.saveAnalysisHistory(historyItem)
+            try {
+                val userId = userRepository.getCurrentUserId()
+                val timestamp = System.currentTimeMillis()
+                val dateFormatted = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                    .format(Date(timestamp))
+
+                val historyItem = AnalysisHistory(
+                    id = UUID.randomUUID().toString(),
+                    userId = userId,
+                    type = AnalysisType.MENU,
+                    name = "Menu Analysis $dateFormatted",
+                    content = Gson().toJson(result),
+                    createdAt = timestamp
+                )
+                historyRepository.saveAnalysisHistory(historyItem)
+                Log.d(TAG, "Analysis saved to history")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving to history: ${e.message}", e)
+            }
         }
     }
 }
