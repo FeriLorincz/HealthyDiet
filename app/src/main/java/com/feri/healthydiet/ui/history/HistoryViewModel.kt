@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.feri.healthydiet.data.model.AnalysisHistory
 import com.feri.healthydiet.data.repository.HistoryRepository
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class HistoryViewModel(
     private val historyRepository: HistoryRepository
@@ -22,14 +23,17 @@ class HistoryViewModel(
 
     fun loadHistory() {
         viewModelScope.launch {
+            Log.d("HistoryViewModel", "Loading history...")
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val items = historyRepository.getUserAnalysisHistory()
+                Log.d("HistoryViewModel", "Loaded ${items.size} history items")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     historyItems = items.sortedByDescending { it.createdAt }
                 )
             } catch (e: Exception) {
+                Log.e("HistoryViewModel", "Error loading history: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "Error loading history: ${e.message}"
@@ -41,9 +45,11 @@ class HistoryViewModel(
     fun deleteHistoryItem(id: String) {
         viewModelScope.launch {
             try {
+                Log.d("HistoryViewModel", "Deleting history item: $id")
                 historyRepository.deleteHistoryById(id)
                 loadHistory()
             } catch (e: Exception) {
+                Log.e("HistoryViewModel", "Failed to delete item: ${e.message}", e)
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to delete item: ${e.message}"
                 )

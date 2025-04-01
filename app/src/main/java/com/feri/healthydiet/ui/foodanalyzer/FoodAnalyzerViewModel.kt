@@ -1,5 +1,6 @@
 package com.feri.healthydiet.ui.foodanalyzer
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.feri.healthydiet.data.model.AnalysisHistory
@@ -119,16 +120,28 @@ class FoodAnalyzerViewModel(
 
     private fun saveToHistory(foodName: String, analysis: FoodAnalysis) {
         viewModelScope.launch {
-            val userId = userRepository.getCurrentUserId()
-            val historyItem = AnalysisHistory(
-                id = UUID.randomUUID().toString(),
-                userId = userId,
-                type = AnalysisType.FOOD_ITEM,
-                name = foodName,
-                content = Gson().toJson(analysis),
-                createdAt = System.currentTimeMillis()
-            )
-            historyRepository.saveAnalysisHistory(historyItem)
+            try {
+                // Forțează crearea utilizatorului înainte de a salva în istoric
+                val userId = userRepository.ensureUserExists()
+
+                val historyItem = AnalysisHistory(
+                    id = UUID.randomUUID().toString(),
+                    userId = userId,
+                    type = AnalysisType.FOOD_ITEM,
+                    name = foodName,
+                    content = Gson().toJson(analysis),
+                    createdAt = System.currentTimeMillis()
+                )
+
+                try {
+                    historyRepository.saveAnalysisHistory(historyItem)
+                    Log.d("FoodAnalyzerViewModel", "Food analysis saved to history successfully")
+                } catch (e: Exception) {
+                    Log.e("FoodAnalyzerViewModel", "Error saving food analysis history: ${e.message}", e)
+                }
+            } catch (e: Exception) {
+                Log.e("FoodAnalyzerViewModel", "Error in saveToHistory: ${e.message}", e)
+            }
         }
     }
 }

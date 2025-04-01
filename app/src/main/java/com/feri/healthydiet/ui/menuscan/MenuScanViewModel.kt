@@ -164,6 +164,9 @@ class MenuScanViewModel(
 
     private fun parseAIResponse(responseText: String): MenuAnalysisResult {
         try {
+            // Log the full response for debugging
+            Log.d(TAG, "Raw AI response received: ${responseText.take(200)}...")
+
             // Parse JSON from AI response
             // Look for JSON content within the response
             val jsonPattern = """\{[\s\S]*\}""".toRegex()
@@ -171,15 +174,42 @@ class MenuScanViewModel(
 
             if (jsonMatch != null) {
                 val jsonStr = jsonMatch.value
+                Log.d(TAG, "Found JSON in response: ${jsonStr.take(100)}...")
+
                 return try {
-                    Gson().fromJson(jsonStr, MenuAnalysisResult::class.java)
+                    val result = Gson().fromJson(jsonStr, MenuAnalysisResult::class.java)
+                    // Verifică dacă rezultatul are date valide
+                    if (result.recommended.isEmpty() && result.avoid.isEmpty() && result.moderate.isEmpty()) {
+                        Log.w(TAG, "JSON parsed but all lists are empty")
+                        createFallbackResult("AI returned empty analysis results")
+                    } else {
+                        result
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "JSON parsing error: ${e.message}", e)
-                    createFallbackResult("Error parsing AI response")
+                    createFallbackResult("Error parsing AI response: ${e.message}")
                 }
             } else {
-                Log.e(TAG, "No JSON found in response")
-                return createFallbackResult("Could not extract structured data from AI response")
+                // Încearcă să extragă un alt format de date structurate
+                Log.e(TAG, "No JSON found in response, trying alternative format")
+
+                // Exemplu de format alternativ fallback - poți personaliza conform nevoilor
+                return MenuAnalysisResult(
+                    recommended = listOf(
+                        FoodRecommendation(
+                            "Could not extract structured data",
+                            "The AI response wasn't in the expected format. Try taking a clearer photo of the menu."
+                        )
+                    ),
+                    avoid = listOf(
+                        FoodRecommendation(
+                            "Technical details",
+                            "No JSON pattern found in response text that was ${responseText.length} characters long."
+                        )
+                    ),
+                    moderate = emptyList(),
+                    savedToHistory = false
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in parseAIResponse: ${e.message}", e)
@@ -198,7 +228,18 @@ class MenuScanViewModel(
     private fun saveToHistory(menuText: String, result: MenuAnalysisResult) {
         viewModelScope.launch {
             try {
-                val userId = userRepository.getCurrentUserId()
+                // Forțează crearea utilizatorului înainte de a salva în istoric
+                //val userId = userRepository.ensureUserExists()
+
+                // Încearcă să asiguri existența utilizatorului și folosește ID-ul rezultat
+                val userId = try {
+                    userRepository.ensureUserExists()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to ensure user exists: ${e.message}", e)
+                    // Folosește un ID temporar dacă apare o eroare
+                    UUID.randomUUID().toString()
+                }
+
                 val timestamp = System.currentTimeMillis()
                 val dateFormatted = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                     .format(Date(timestamp))
@@ -211,10 +252,17 @@ class MenuScanViewModel(
                     content = Gson().toJson(result),
                     createdAt = timestamp
                 )
-                historyRepository.saveAnalysisHistory(historyItem)
-                Log.d(TAG, "Analysis saved to history")
+
+                try {
+                    historyRepository.saveAnalysisHistory(historyItem)
+                    Log.d(TAG, "Analysis saved to history successfully")
+                    // Setăm flag-ul care indică că analiza a fost salvată
+                    result.savedToHistory = true
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error saving analysis history: ${e.message}", e)
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Error saving to history: ${e.message}", e)
+                Log.e(TAG, "Error in saveToHistory: ${e.message}", e)
             }
         }
     }
@@ -229,7 +277,8 @@ data class MenuScanUiState(
 data class MenuAnalysisResult(
     val recommended: List<FoodRecommendation>,
     val avoid: List<FoodRecommendation>,
-    val moderate: List<FoodRecommendation>
+    val moderate: List<FoodRecommendation>,
+    var savedToHistory: Boolean = false
 ) : Serializable
 
 data class FoodRecommendation(

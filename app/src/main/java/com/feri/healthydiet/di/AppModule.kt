@@ -1,5 +1,6 @@
 package com.feri.healthydiet.di
 
+import android.util.Log
 import com.feri.healthydiet.data.local.AppDatabase
 import com.feri.healthydiet.data.remote.AnthropicService
 import com.feri.healthydiet.data.repository.AnalysisRepository
@@ -9,6 +10,7 @@ import com.feri.healthydiet.ui.dashboard.DashboardViewModel
 import com.feri.healthydiet.ui.foodanalyzer.FoodAnalyzerViewModel
 import com.feri.healthydiet.ui.history.HistoryViewModel
 import com.feri.healthydiet.ui.menuscan.MenuScanViewModel
+import com.feri.healthydiet.ui.menuscan.ResultsViewModel
 import com.feri.healthydiet.ui.profile.ProfileViewModel
 import com.feri.healthydiet.util.Constants
 import com.feri.healthydiet.util.SpeechRecognitionHelper
@@ -25,7 +27,17 @@ import java.util.concurrent.TimeUnit
 
 val appModule = module {
     // Database
-    single { AppDatabase.getDatabase(androidContext()) }
+
+    //single { AppDatabase.getDatabase(androidContext()) }
+    single {
+        try {
+            Log.d("AppModule", "Creating AppDatabase")
+            AppDatabase.getDatabase(androidContext())
+        } catch (e: Exception) {
+            Log.e("AppModule", "Error creating database: ${e.message}", e)
+            throw e
+        }
+    }
     single { get<AppDatabase>().userDao() }
     single { get<AppDatabase>().healthProfileDao() }
     single { get<AppDatabase>().analysisHistoryDao() }
@@ -58,7 +70,7 @@ val appModule = module {
 
     // Repositories
     single { UserRepository(get(), get()) }
-    single { HistoryRepository(get()) }
+    single { HistoryRepository(get(), get()) }
     single { AnalysisRepository(get(), get()) }
 
     // Helpers
@@ -72,4 +84,5 @@ val appModule = module {
     viewModel { FoodAnalyzerViewModel(get(), get(), get()) }
     viewModel { ProfileViewModel(get()) }
     viewModel { HistoryViewModel(get()) }
+    viewModel { ResultsViewModel(get(), get()) }
 }

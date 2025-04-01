@@ -95,5 +95,13 @@
             android:text="Save to History"
             app:layout_constraintTop_toBottomOf="@id/btnReadResults" />
 
+        <Button
+            android:id="@+id/btnRetry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Retry with Different Image"
+            android:visibility="gone" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

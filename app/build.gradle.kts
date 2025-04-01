@@ -152,4 +152,8 @@ dependencies {
 
     // MaterialDesign
     implementation("com.google.android.material:material:1.11.0")
+
+    //Firebase Authentication
+    implementation("com.google.firebase:firebase-auth-ktx:22.1.1")
+    implementation ("com.google.android.gms:play-services-auth:20.5.0")
 }

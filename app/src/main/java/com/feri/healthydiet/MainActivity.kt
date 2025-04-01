@@ -34,21 +34,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        requestNeededPermissions()
-
         try {
-            setupNavigation()
+            Log.d("MainActivity", "onCreate: Start")
+            super.onCreate(savedInstanceState)
+            Log.d("MainActivity", "onCreate: After super.onCreate")
+
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            Log.d("MainActivity", "onCreate: After binding initialization")
+            setContentView(binding.root)
+            Log.d("MainActivity", "onCreate: After setContentView")
+
+            requestNeededPermissions()
+            Log.d("MainActivity", "onCreate: After requestNeededPermissions")
+
+            try {
+                setupNavigation()
+                Log.d("MainActivity", "onCreate: After setupNavigation")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error setting up navigation: ${e.message}", e)
+            }
+            Log.d("MainActivity", "onCreate: End")
         } catch (e: Exception) {
-            Log.e(TAG, "Error setting up navigation: ${e.message}")
+            Log.e("MainActivity", "Global error in onCreate: ${e.message}", e)
         }
     }
 
     private fun requestNeededPermissions() {
+        Log.d(TAG, "Requesting permissions")
         val permissions = mutableListOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
@@ -69,7 +81,10 @@ class MainActivity : AppCompatActivity() {
         }.toTypedArray()
 
         if (permissionsToRequest.isNotEmpty()) {
+            Log.d(TAG, "Requesting permissions: ${permissionsToRequest.joinToString()}")
             permissionLauncher.launch(permissionsToRequest)
+        } else {
+            Log.d(TAG, "All permissions already granted")
         }
     }
 

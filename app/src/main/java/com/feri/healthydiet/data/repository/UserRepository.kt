@@ -68,6 +68,50 @@ class UserRepository(
         return newProfile
     }
 
+    suspend fun ensureUserExists(): String = withContext(Dispatchers.IO) {
+        try {
+            // Forțează crearea unui utilizator și a unui profil de sănătate dacă nu există
+            val user = getCurrentUser() // Aceasta va crea utilizatorul dacă nu există
+            return@withContext user.id
+        } catch (e: Exception) {
+            // În caz de eroare, creați manual utilizatorul
+            val userId = UUID.randomUUID().toString()
+            val newUser = User(
+                id = userId,
+                name = "Guest User",
+                email = "guest@example.com",
+                createdAt = System.currentTimeMillis()
+            )
+
+            try {
+                userDao.insert(newUser)
+            } catch (e: Exception) {
+                // Ignorăm erorile de inserare, poate utilizatorul există deja
+            }
+
+            try {
+                // Creăm și un profil de sănătate
+                val profile = HealthProfile(
+                    id = UUID.randomUUID().toString(),
+                    userId = userId,
+                    hasDiabetes = false,
+                    hasLiverSteatosis = false,
+                    hasHypertension = false,
+                    hasHighCholesterol = false,
+                    hasCeliac = false,
+                    customConditions = emptyList(),
+                    updatedAt = System.currentTimeMillis()
+                )
+                healthProfileDao.insert(profile)
+            } catch (e: Exception) {
+                // Ignorăm erorile de inserare, poate profilul există deja
+            }
+
+            currentUserId = userId
+            return@withContext userId
+        }
+    }
+
     suspend fun saveUser(user: User) = withContext(Dispatchers.IO) {
         userDao.insert(user)
     }
