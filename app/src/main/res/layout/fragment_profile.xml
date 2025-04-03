@@ -42,8 +42,7 @@
                 android:id="@+id/etName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName"
-                android:contentDescription="Enter your name" />
+                android:inputType="textPersonName" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -59,8 +58,7 @@
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
-                android:contentDescription="Enter your email address" />
+                android:inputType="textEmailAddress" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -148,8 +146,7 @@
                 android:layout_height="wrap_content"
                 android:inputType="textMultiLine"
                 android:minLines="3"
-                android:gravity="top|start"
-                android:contentDescription="Enter your other health conditions" />
+                android:gravity="top|start" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -162,6 +159,17 @@
             android:minHeight="48dp"
             app:layout_constraintTop_toBottomOf="@id/tilCustomConditions" />
 
+        <!-- Adaugă butonul de logout -->
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Logout"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:minHeight="48dp"
+            app:layout_constraintTop_toBottomOf="@id/btnSave" />
+
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
@@ -170,7 +178,7 @@
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnSave" />
+            app:layout_constraintTop_toBottomOf="@id/btnLogout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

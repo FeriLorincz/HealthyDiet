@@ -9,17 +9,27 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.feri.healthydiet.databinding.ActivityMainBinding
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
+    private lateinit var auth: FirebaseAuth
+
+    // Lista de ID-uri pentru fragmentele care ar trebui să aibă bara de navigare ascunsă
+    private val fragmentsWithoutBottomNav = listOf(
+        R.id.splashFragment,
+        R.id.loginFragment,
+        R.id.registerFragment
+    )
 
     // Launcher pentru solicitarea permisiunilor
     private val permissionLauncher = registerForActivityResult(
@@ -38,6 +48,9 @@ class MainActivity : AppCompatActivity() {
             Log.d("MainActivity", "onCreate: Start")
             super.onCreate(savedInstanceState)
             Log.d("MainActivity", "onCreate: After super.onCreate")
+
+            // Inițializează FirebaseAuth
+            auth = FirebaseAuth.getInstance()
 
             binding = ActivityMainBinding.inflate(layoutInflater)
             Log.d("MainActivity", "onCreate: After binding initialization")
@@ -102,6 +115,19 @@ class MainActivity : AppCompatActivity() {
 
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
+
+        // Configurăm evenimentul de schimbare a destinației pentru a afișa/ascunde bara de navigare
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            toggleBottomNavigationVisibility(destination)
+        }
+    }
+
+    private fun toggleBottomNavigationVisibility(destination: NavDestination) {
+        if (destination.id in fragmentsWithoutBottomNav) {
+            binding.navView.visibility = android.view.View.GONE
+        } else {
+            binding.navView.visibility = android.view.View.VISIBLE
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

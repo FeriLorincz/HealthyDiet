@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.feri.healthydiet" />
+                  <option name="mobileSdkAppId" value="1:55408282973:android:c168a2ad1c4b0594fc2cb4" />
+                  <option name="projectId" value="healthydiet-2e396" />
+                  <option name="projectNumber" value="55408282973" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

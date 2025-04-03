@@ -6,7 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.feri.healthydiet.R
 import com.feri.healthydiet.databinding.FragmentProfileBinding
+import com.feri.healthydiet.ui.auth.AuthViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ProfileFragment : Fragment() {
@@ -15,6 +18,7 @@ class ProfileFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: ProfileViewModel by viewModel()
+    private val authViewModel: AuthViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,7 +52,7 @@ class ProfileFragment : Fragment() {
                 binding.cbCeliac.isChecked = it.healthProfile.hasCeliac
 
                 // Custom conditions
-                val customConditions = it.healthProfile.customConditions.joinToString("\n")
+                val customConditions = it.healthProfile.customConditions.joinToString("\\n")
                 binding.etCustomConditions.setText(customConditions)
             }
         }
@@ -79,7 +83,7 @@ class ProfileFragment : Fragment() {
             // Custom conditions (separated by new lines)
             val customConditionsText = binding.etCustomConditions.text.toString()
             val customConditions = customConditionsText
-                .split("\n")
+                .split("\\n")
                 .filter { it.isNotBlank() }
 
             viewModel.saveUserProfile(
@@ -92,6 +96,12 @@ class ProfileFragment : Fragment() {
                 hasCeliac = hasCeliac,
                 customConditions = customConditions
             )
+        }
+
+        // Adăugăm acțiunea de logout
+        binding.btnLogout.setOnClickListener {
+            authViewModel.logout()
+            findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
         }
     }
 

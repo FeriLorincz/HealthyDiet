@@ -2,13 +2,62 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/dashboardFragment">
+    app:startDestination="@id/splashFragment">
 
+    <!-- Splash Fragment (Nou) -->
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.feri.healthydiet.ui.auth.SplashFragment"
+        android:label="HealthyDiet">
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splashFragment_to_dashboardFragment"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Login Fragment (Nou) -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.feri.healthydiet.ui.auth.LoginFragment"
+        android:label="Login">
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_dashboardFragment"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Register Fragment (Nou) -->
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.feri.healthydiet.ui.auth.RegisterFragment"
+        android:label="Register">
+        <action
+            android:id="@+id/action_registerFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_registerFragment_to_dashboardFragment"
+            app:destination="@id/dashboardFragment"
+            app:popUpTo="@id/registerFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Dashboard Fragment (Existent) -->
     <fragment
         android:id="@+id/dashboardFragment"
         android:name="com.feri.healthydiet.ui.dashboard.DashboardFragment"
         android:label="Dashboard" />
 
+    <!-- Menu Scan Fragment (Existent) -->
     <fragment
         android:id="@+id/menuScanFragment"
         android:name="com.feri.healthydiet.ui.menuscan.MenuScanFragment"
@@ -18,6 +67,7 @@
             app:destination="@id/resultsFragment" />
     </fragment>
 
+    <!-- Results Fragment (Existent) -->
     <fragment
         android:id="@+id/resultsFragment"
         android:name="com.feri.healthydiet.ui.menuscan.ResultsFragment"
@@ -27,24 +77,35 @@
             app:argType="com.feri.healthydiet.ui.menuscan.MenuAnalysisResult" />
     </fragment>
 
+    <!-- Food Analyzer Fragment (Existent) -->
     <fragment
         android:id="@+id/foodAnalyzerFragment"
         android:name="com.feri.healthydiet.ui.foodanalyzer.FoodAnalyzerFragment"
         android:label="Food Analyzer" />
 
+    <!-- Profile Fragment (Existent, adăugat action de logout) -->
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.feri.healthydiet.ui.profile.ProfileFragment"
-        android:label="Profile" />
+        android:label="Profile">
+        <action
+            android:id="@+id/action_profileFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
 
+    <!-- History Fragment (Existent) -->
     <fragment
         android:id="@+id/historyFragment"
-        android:name="com.feri.healthydiet.ui.history.HistoryFragment">
+        android:name="com.feri.healthydiet.ui.history.HistoryFragment"
+        android:label="History">
         <action
             android:id="@+id/actionHistoryFragmentToHistoryDetailFragment"
             app:destination="@id/historyDetailFragment" />
     </fragment>
 
+    <!-- History Detail Fragment (Existent) -->
     <fragment
         android:id="@+id/historyDetailFragment"
         android:name="com.feri.healthydiet.ui.history.HistoryDetailFragment"

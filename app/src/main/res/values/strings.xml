@@ -9,6 +9,27 @@
     <string name="title_history">History</string>
     <string name="title_profile">Profile</string>
 
+    <!-- Authentication -->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="full_name">Full Name</string>
+    <string name="login_prompt">Already have an account? Log in</string>
+    <string name="register_prompt">Don\'t have an account? Sign up</string>
+    <string name="login_success">Login successful</string>
+    <string name="register_success">Registration successful</string>
+    <string name="logout">Logout</string>
+    <string name="login_error">Login failed</string>
+    <string name="register_error">Registration failed</string>
+    <string name="password_mismatch">Passwords do not match</string>
+    <string name="password_length">Password should be at least 6 characters</string>
+    <string name="empty_name">Name cannot be empty</string>
+    <string name="empty_email">Email cannot be empty</string>
+    <string name="empty_password">Password cannot be empty</string>
+    <string name="empty_confirm_password">Please confirm your password</string>
+
     <!-- Common -->
     <string name="category_format">Category: %s</string>
     <string name="protein_format">%sg</string>
