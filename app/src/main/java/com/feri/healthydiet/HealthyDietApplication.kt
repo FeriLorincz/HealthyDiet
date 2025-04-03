@@ -3,6 +3,7 @@ package com.feri.healthydiet
 import android.app.Application
 import android.util.Log
 import com.feri.healthydiet.di.appModule
+import com.google.firebase.FirebaseApp
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -13,6 +14,10 @@ class HealthyDietApplication : Application() {
             Log.d("HealthyDietApplication", "onCreate: Start")
             super.onCreate()
             Log.d("HealthyDietApplication", "onCreate: After super.onCreate")
+
+            // Inițializează Firebase
+            FirebaseApp.initializeApp(this)
+            Log.d("HealthyDietApplication", "onCreate: Firebase initialized")
 
             startKoin {
                 Log.d("HealthyDietApplication", "startKoin: Configuring")

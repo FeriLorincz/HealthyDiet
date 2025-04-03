@@ -4,8 +4,10 @@ import android.util.Log
 import com.feri.healthydiet.data.local.AppDatabase
 import com.feri.healthydiet.data.remote.AnthropicService
 import com.feri.healthydiet.data.repository.AnalysisRepository
+import com.feri.healthydiet.data.repository.AuthRepository
 import com.feri.healthydiet.data.repository.HistoryRepository
 import com.feri.healthydiet.data.repository.UserRepository
+import com.feri.healthydiet.ui.auth.AuthViewModel
 import com.feri.healthydiet.ui.dashboard.DashboardViewModel
 import com.feri.healthydiet.ui.foodanalyzer.FoodAnalyzerViewModel
 import com.feri.healthydiet.ui.history.HistoryViewModel
@@ -27,8 +29,6 @@ import java.util.concurrent.TimeUnit
 
 val appModule = module {
     // Database
-
-    //single { AppDatabase.getDatabase(androidContext()) }
     single {
         try {
             Log.d("AppModule", "Creating AppDatabase")
@@ -69,9 +69,10 @@ val appModule = module {
     single { get<Retrofit>().create(AnthropicService::class.java) }
 
     // Repositories
-    single { UserRepository(get(), get()) }
+    single { UserRepository(get(), get(), androidContext()) }
     single { HistoryRepository(get(), get()) }
     single { AnalysisRepository(get(), get()) }
+    single { AuthRepository(get()) }
 
     // Helpers
     single { TextRecognitionHelper() }
@@ -85,4 +86,7 @@ val appModule = module {
     viewModel { ProfileViewModel(get()) }
     viewModel { HistoryViewModel(get()) }
     viewModel { ResultsViewModel(get(), get()) }
+
+    // Authentication ViewModels
+    viewModel { AuthViewModel(get()) }
 }

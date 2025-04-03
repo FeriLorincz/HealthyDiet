@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55408282973",
+    "project_id": "healthydiet-2e396",
+    "storage_bucket": "healthydiet-2e396.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55408282973:android:c168a2ad1c4b0594fc2cb4",
+        "android_client_info": {
+          "package_name": "com.feri.healthydiet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAErVftOpXtA-o29_OIWrsm23SE9IRwQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

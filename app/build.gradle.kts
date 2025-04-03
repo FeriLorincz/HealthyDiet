@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     id("kotlin-kapt")
     id("androidx.navigation.safeargs.kotlin")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -56,12 +57,24 @@ android {
                 "META-INF/AL2.0",
                 "META-INF/LGPL2.1",
                 "META-INF/{AL2.0,LGPL2.1}",
-                "META-INF/INDEX.LIST"
+                "META-INF/INDEX.LIST",
+                // Exclude Java Kotlin modules cu probleme de compatibilitate
+                "META-INF/java.com.google.android.gmscore.integ.client.firebase-auth-api_firebase-auth-api.kotlin_module"
             )
             // Exclude fișierele .kotlin_module
             pickFirsts += listOf(
                 "META-INF/*.kotlin_module"
             )
+        }
+    }
+
+    configurations.all {
+        resolutionStrategy {
+            // Forțează versiuni compatibile cu Firebase Auth
+            force("org.jetbrains.kotlin:kotlin-stdlib:1.8.10")
+            force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10")
+            force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10")
+            force("org.jetbrains.kotlin:kotlin-reflect:1.8.10")
         }
     }
 
@@ -104,13 +117,13 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.activity:activity-compose:1.8.0")
     implementation("androidx.compose.ui:ui:1.5.4")
     implementation("androidx.compose.ui:ui-graphics:1.5.4")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
     implementation("androidx.compose.material3:material3:1.1.2")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
@@ -123,7 +136,7 @@ dependencies {
     // For MVVM architecture
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
-    implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.activity:activity-ktx:1.8.0")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
 
     // Room
@@ -153,7 +166,8 @@ dependencies {
     // MaterialDesign
     implementation("com.google.android.material:material:1.11.0")
 
-    //Firebase Authentication
-    implementation("com.google.firebase:firebase-auth-ktx:22.1.1")
-    implementation ("com.google.android.gms:play-services-auth:20.5.0")
+    // Firebase - folosim versiuni exacte pentru a evita conflictele
+    implementation("com.google.firebase:firebase-auth:22.0.0") // Versiune fixă, nu BOM
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation(platform("com.google.firebase:firebase-bom:31.5.0"))
 }
