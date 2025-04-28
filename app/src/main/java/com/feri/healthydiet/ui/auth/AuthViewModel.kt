@@ -32,7 +32,7 @@ class AuthViewModel(
             .addOnSuccessListener { authResult ->
                 val firebaseUser = authResult.user
                 if (firebaseUser != null) {
-                    viewModelScope.launch(Dispatchers.IO) {
+                    viewModelScope.launch {
                         try {
                             // Verifică dacă utilizatorul există
                             val localUser = userRepository.getUserByEmail(email)
@@ -46,20 +46,25 @@ class AuthViewModel(
                                     profilePhotoUrl = firebaseUser.photoUrl?.toString(),
                                     createdAt = System.currentTimeMillis()
                                 )
-                                userRepository.saveUser(newUser)
-                            }
-
-                            // Setează userId-ul curent
-                            userRepository.setCurrentUserId(firebaseUser.uid)
-
-                            withContext(Dispatchers.Main) {
+                                try {
+                                    userRepository.saveUser(newUser)
+                                    // Setează userId-ul curent
+                                    userRepository.setCurrentUserId(firebaseUser.uid)
+                                    _authState.value = AuthState.Success
+                                } catch (e: Exception) {
+                                    // Setăm userId-ul chiar dacă salvarea a eșuat
+                                    userRepository.setCurrentUserId(firebaseUser.uid)
+                                    _authState.value = AuthState.Success
+                                }
+                            } else {
+                                // Utilizatorul există, setează doar ID-ul curent
+                                userRepository.setCurrentUserId(firebaseUser.uid)
                                 _authState.value = AuthState.Success
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Error syncing with local database", e)
-                            withContext(Dispatchers.Main) {
-                                _authState.value = AuthState.Error("Login successful but failed to sync with local database")
-                            }
+                            // Chiar dacă sincronizarea eșuează, autentificarea este considerată reușită
+                            userRepository.setCurrentUserId(firebaseUser.uid)
+                            _authState.value = AuthState.Success
                         }
                     }
                 } else {
@@ -89,24 +94,53 @@ class AuthViewModel(
                     firebaseUser?.updateProfile(profileUpdates)
                         ?.addOnSuccessListener {
                             Log.d(TAG, "User profile updated successfully")
-                            // Salvează utilizatorul în baza de date
-                            saveUserToLocalDatabase(firebaseUser, name, email)
+                            // Salvează utilizatorul local, dar nu bloca autentificarea dacă eșuează
+                            viewModelScope.launch {
+                                try {
+                                    val userId = firebaseUser.uid
+                                    val newUser = User(
+                                        id = userId,
+                                        name = name,
+                                        email = email,
+                                        profilePhotoUrl = firebaseUser.photoUrl?.toString(),
+                                        createdAt = System.currentTimeMillis()
+                                    )
+
+                                    try {
+                                        userRepository.saveUser(newUser)
+                                    } catch (e: Exception) {
+                                        // Log error but continue
+                                    }
+
+                                    // Setează ID-ul utilizatorului curent indiferent dacă salvarea a reușit
+                                    userRepository.setCurrentUserId(userId)
+                                    _authState.value = AuthState.Success
+                                } catch (e: Exception) {
+                                    // Ignoră erorile de salvare, consideră autentificarea reușită
+                                    if (firebaseUser != null) {
+                                        userRepository.setCurrentUserId(firebaseUser.uid)
+                                        _authState.value = AuthState.Success
+                                    } else {
+                                        _authState.value = AuthState.Error("Registration error: ${e.message}")
+                                    }
+                                }
+                            }
                         }
                         ?.addOnFailureListener { e ->
                             Log.e(TAG, "Failed to update profile", e)
-                            // Chiar dacă actualizarea profilului eșuează, încercăm să salvăm utilizatorul
-                            saveUserToLocalDatabase(firebaseUser, name, email)
+                            // Chiar dacă actualizarea profilului eșuează, considerăm înregistrarea reușită
+                            if (firebaseUser != null) {
+                                viewModelScope.launch {
+                                    userRepository.setCurrentUserId(firebaseUser.uid)
+                                }
+                                _authState.value = AuthState.Success
+                            } else {
+                                _authState.value = AuthState.Error("Profile update failed: ${e.message}")
+                            }
                         }
                 } else {
                     Log.e(TAG, "Registration failed", task.exception)
-                    val errorMessage = task.exception?.message ?: "Registration failed"
-
-                    // Gestionare specifică a erorilor reCAPTCHA
-                    if (errorMessage.contains("CONFIGURATION_NOT_FOUND")) {
-                        _authState.value = AuthState.Error("Registration failed: reCAPTCHA issue. Check Firebase settings.")
-                    } else {
-                        _authState.value = AuthState.Error(errorMessage)
-                    }
+                    _authState.value = AuthState.Error(task.exception?.message ?: "Registration failed")
                 }
             }
     }

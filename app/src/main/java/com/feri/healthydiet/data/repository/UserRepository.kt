@@ -34,12 +34,34 @@ class UserRepository(
 
     suspend fun getCurrentUser(): User = withContext(Dispatchers.IO) {
         val userId = getCurrentUserId()
-        val user = userDao.getUserById(userId).first()
-        return@withContext user ?: createDefaultUser()
+        Log.d("UserRepository", "Getting user with ID: $userId")
+
+        try {
+            val userFlow = userDao.getUserById(userId)
+            val user = userFlow.first()
+            Log.d("UserRepository", "Retrieved user from DB: $user")
+            return@withContext user ?: createDefaultUser()
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error getting user: ${e.message}", e)
+            return@withContext createDefaultUser()
+        }
+    }
+
+    suspend fun getUserHealthProfile(): HealthProfile = withContext(Dispatchers.IO) {
+        val userId = getCurrentUserId()
+        try {
+            val profile = healthProfileDao.getProfileForUser(userId).first()
+            return@withContext profile ?: createDefaultHealthProfile(userId)
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error getting health profile: ${e.message}", e)
+            return@withContext createDefaultHealthProfile(userId)
+        }
     }
 
     fun getCurrentUserId(): String {
-        return preferences.getString(Constants.PREF_CURRENT_USER_ID, null) ?: getDefaultUserId()
+        val userId = preferences.getString(Constants.PREF_CURRENT_USER_ID, null)
+        Log.d("UserRepository", "Current user ID from preferences: $userId")
+        return userId ?: getDefaultUserId()
     }
 
     private fun getDefaultUserId(): String {
@@ -62,12 +84,6 @@ class UserRepository(
         saveUser(newUser)
         createDefaultHealthProfile(userId)
         return newUser
-    }
-
-    suspend fun getUserHealthProfile(): HealthProfile = withContext(Dispatchers.IO) {
-        val userId = getCurrentUserId()
-        val profile = healthProfileDao.getProfileForUser(userId).first()
-        return@withContext profile ?: createDefaultHealthProfile(userId)
     }
 
     private suspend fun createDefaultHealthProfile(userId: String): HealthProfile {
@@ -129,7 +145,7 @@ class UserRepository(
         }
     }
 
-    suspend fun saveUser(user: User) = withContext(Dispatchers.IO) {
+    suspend fun saveUser(user: User): Boolean = withContext(Dispatchers.IO) {
         try {
             // Verifică dacă utilizatorul există deja
             val existingUser = getUserByEmail(user.email)
@@ -146,10 +162,10 @@ class UserRepository(
                 // Inserăm utilizatorul nou
                 userDao.insert(user)
             }
-            true
+            return@withContext true
         } catch (e: Exception) {
             Log.e("UserRepository", "Error saving user: ${e.message}", e)
-            false
+            return@withContext false
         }
     }
 
@@ -165,14 +181,62 @@ class UserRepository(
     }
 
     suspend fun updateUser(user: User) = withContext(Dispatchers.IO) {
-        userDao.update(user)
+        try {
+            userDao.update(user)
+            true
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error updating user: ${e.message}", e)
+            false
+        }
+    }
+
+    suspend fun updateHealthProfile(healthProfile: HealthProfile): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Log.d("UserRepository", "Updating health profile: $healthProfile")
+            healthProfileDao.update(healthProfile)
+            return@withContext true
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error updating health profile: ${e.message}", e)
+            return@withContext false
+        }
     }
 
     suspend fun saveHealthProfile(healthProfile: HealthProfile) = withContext(Dispatchers.IO) {
         healthProfileDao.insert(healthProfile)
     }
 
-    suspend fun updateHealthProfile(healthProfile: HealthProfile) = withContext(Dispatchers.IO) {
-        healthProfileDao.update(healthProfile)
+    suspend fun testDatabaseFunctionality() {
+        withContext(Dispatchers.IO) {
+            try {
+                val testUser = User(
+                    id = "test-${System.currentTimeMillis()}",
+                    name = "Test User",
+                    email = "test@example.com",
+                    createdAt = System.currentTimeMillis()
+                )
+
+                Log.d("UserRepository", "Testing DB: Inserting test user")
+                userDao.insert(testUser)
+
+                val retrievedUser = userDao.getUserById(testUser.id).first()
+                Log.d("UserRepository", "Testing DB: Retrieved user: $retrievedUser")
+
+                // Testează și HealthProfile
+                val testProfile = HealthProfile(
+                    id = "test-profile-${System.currentTimeMillis()}",
+                    userId = testUser.id,
+                    hasDiabetes = true,
+                    updatedAt = System.currentTimeMillis()
+                )
+
+                Log.d("UserRepository", "Testing DB: Inserting test health profile")
+                healthProfileDao.insert(testProfile)
+
+                val retrievedProfile = healthProfileDao.getProfileForUser(testUser.id).first()
+                Log.d("UserRepository", "Testing DB: Retrieved profile: $retrievedProfile")
+            } catch (e: Exception) {
+                Log.e("UserRepository", "Database test failed: ${e.message}", e)
+            }
+        }
     }
 }

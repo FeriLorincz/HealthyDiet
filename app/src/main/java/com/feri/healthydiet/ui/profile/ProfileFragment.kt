@@ -1,6 +1,7 @@
 package com.feri.healthydiet.ui.profile
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,16 +32,16 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        Log.d("ProfileFragment", "onViewCreated - loading user profile")
+        viewModel.loadUserProfile()  // Asigură-te că această linie există
         observeViewModel()
         setupListeners()
-
-        viewModel.loadUserProfile()
     }
 
     private fun observeViewModel() {
         viewModel.userProfile.observe(viewLifecycleOwner) { profile ->
             profile?.let {
+                Log.d("ProfileFragment", "Received profile update: name=${it.name}, hasDiabetes=${it.healthProfile.hasDiabetes}, customConditions=${it.healthProfile.customConditions}")
                 binding.etName.setText(it.name)
                 binding.etEmail.setText(it.email)
 
@@ -51,8 +52,12 @@ class ProfileFragment : Fragment() {
                 binding.cbHighCholesterol.isChecked = it.healthProfile.hasHighCholesterol
                 binding.cbCeliac.isChecked = it.healthProfile.hasCeliac
 
-                // Custom conditions
-                val customConditions = it.healthProfile.customConditions.joinToString("\\n")
+                // Custom conditions - separă cu newline
+                val customConditions = if (it.healthProfile.customConditions.isEmpty()) {
+                    ""
+                } else {
+                    it.healthProfile.customConditions.joinToString("\n")
+                }
                 binding.etCustomConditions.setText(customConditions)
             }
         }
@@ -61,9 +66,11 @@ class ProfileFragment : Fragment() {
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
-        viewModel.saveSuccess.observe(viewLifecycleOwner) { saved ->
-            if (saved) {
+        viewModel.saveSuccess.observe(viewLifecycleOwner) { success ->
+            if (success) {
                 Toast.makeText(context, "Profile saved successfully", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Failed to save profile", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -80,11 +87,21 @@ class ProfileFragment : Fragment() {
             val hasHighCholesterol = binding.cbHighCholesterol.isChecked
             val hasCeliac = binding.cbCeliac.isChecked
 
-            // Custom conditions (separated by new lines)
+            // Custom conditions (separate by newlines)
             val customConditionsText = binding.etCustomConditions.text.toString()
-            val customConditions = customConditionsText
-                .split("\\n")
-                .filter { it.isNotBlank() }
+            val customConditions = if (customConditionsText.isNotEmpty()) {
+                // Încearcă diferite separatoare
+                if (customConditionsText.contains("\n")) {
+                    customConditionsText.split("\n")
+                } else {
+                    // Dacă nu conține newline, încearcă alt separator sau consideră tot textul ca o condiție
+                    listOf(customConditionsText)
+                }
+            } else {
+                emptyList()
+            }.filter { it.isNotBlank() }
+
+            Log.d("ProfileFragment", "Custom conditions: $customConditions")
 
             viewModel.saveUserProfile(
                 name = name,
@@ -100,6 +117,8 @@ class ProfileFragment : Fragment() {
 
         // Adăugăm acțiunea de logout
         binding.btnLogout.setOnClickListener {
+            // Asigură-te că și deconectarea funcționează corect
+            val authViewModel: AuthViewModel by viewModel()
             authViewModel.logout()
             findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
         }

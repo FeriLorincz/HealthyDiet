@@ -15,6 +15,6 @@ interface HealthProfileDao {
     @Delete
     suspend fun delete(healthProfile: HealthProfile)
 
-    @Query("SELECT * FROM health_profiles WHERE userId = :userId")
+    @Query("SELECT * FROM health_profiles WHERE userId = :userId LIMIT 1")
     fun getProfileForUser(userId: String): Flow<HealthProfile?>
 }
