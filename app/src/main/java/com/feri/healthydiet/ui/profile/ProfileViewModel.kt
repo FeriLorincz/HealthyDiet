@@ -1,5 +1,6 @@
 package com.feri.healthydiet.ui.profile
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -23,12 +24,29 @@ class ProfileViewModel(
     private val _saveSuccess = MutableLiveData<Boolean>()
     val saveSuccess: LiveData<Boolean> = _saveSuccess
 
+    init {
+        // Testează baza de date la inițializarea ViewModel-ului
+        viewModelScope.launch {
+            try {
+                userRepository.testDatabaseFunctionality()
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Database test failed: ${e.message}", e)
+            }
+        }
+        // Apoi încărcăm profilul
+        loadUserProfile()
+    }
+
     fun loadUserProfile() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                Log.d("ProfileViewModel", "Starting to load user profile")
                 val user = userRepository.getCurrentUser()
+                Log.d("ProfileViewModel", "Loaded user: $user")
+
                 val healthProfile = userRepository.getUserHealthProfile()
+                Log.d("ProfileViewModel", "Loaded health profile: $healthProfile")
 
                 _userProfile.value = UserWithHealthProfile(
                     id = user.id,
@@ -36,8 +54,9 @@ class ProfileViewModel(
                     email = user.email,
                     healthProfile = healthProfile
                 )
+                Log.d("ProfileViewModel", "User profile set to LiveData")
             } catch (e: Exception) {
-                // Handle error - create a new user profile if none exists
+                Log.e("ProfileViewModel", "Error loading profile: ${e.message}", e)
                 createNewUserProfile()
             } finally {
                 _isLoading.value = false
@@ -58,45 +77,61 @@ class ProfileViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                Log.d("ProfileViewModel", "Saving profile with conditions: $customConditions, Diabetes: $hasDiabetes")
                 val currentProfile = _userProfile.value
 
                 if (currentProfile != null) {
-                    // Update existing profile
                     val updatedUser = User(
                         id = currentProfile.id,
                         name = name,
-                        email = email
+                        email = email,
+                        profilePhotoUrl = null, // sau currentProfile.profilePhotoUrl
+                        createdAt = System.currentTimeMillis()
                     )
 
+                    // Folosește id-ul profilului de sănătate existent
+                    val healthProfileId = currentProfile.healthProfile.id
+
                     val updatedHealthProfile = HealthProfile(
-                        id = currentProfile.healthProfile.id,
+                        id = healthProfileId,
                         userId = currentProfile.id,
                         hasDiabetes = hasDiabetes,
                         hasLiverSteatosis = hasLiverSteatosis,
                         hasHypertension = hasHypertension,
                         hasHighCholesterol = hasHighCholesterol,
                         hasCeliac = hasCeliac,
-                        customConditions = customConditions
+                        customConditions = customConditions,
+                        updatedAt = System.currentTimeMillis()
                     )
 
-                    userRepository.updateUser(updatedUser)
-                    userRepository.updateHealthProfile(updatedHealthProfile)
+                    Log.d("ProfileViewModel", "Updating health profile: $updatedHealthProfile")
+                    try {
+                        userRepository.updateUser(updatedUser)
+                        userRepository.updateHealthProfile(updatedHealthProfile)
+                        // Actualizează LiveData cu noile valori
+                        _userProfile.value = UserWithHealthProfile(
+                            id = updatedUser.id,
+                            name = updatedUser.name,
+                            email = updatedUser.email,
+                            healthProfile = updatedHealthProfile
+                        )
 
-                    _userProfile.value = UserWithHealthProfile(
-                        id = updatedUser.id,
-                        name = updatedUser.name,
-                        email = updatedUser.email,
-                        healthProfile = updatedHealthProfile
-                    )
+                        _saveSuccess.value = true
+                    } catch (e: Exception) {
+                        Log.e("ProfileViewModel", "Error updating profile: ${e.message}", e)
+                        _saveSuccess.value = false
+                    }
                 } else {
-                    // Create new profile
-                    val userId = UUID.randomUUID().toString()
+                    // Create new profile if none exists
+                    val userId = userRepository.getCurrentUserId()
                     val profileId = UUID.randomUUID().toString()
 
                     val newUser = User(
                         id = userId,
                         name = name,
-                        email = email
+                        email = email,
+                        profilePhotoUrl = null,
+                        createdAt = System.currentTimeMillis()
                     )
 
                     val newHealthProfile = HealthProfile(
@@ -107,22 +142,29 @@ class ProfileViewModel(
                         hasHypertension = hasHypertension,
                         hasHighCholesterol = hasHighCholesterol,
                         hasCeliac = hasCeliac,
-                        customConditions = customConditions
+                        customConditions = customConditions,
+                        updatedAt = System.currentTimeMillis()
                     )
 
-                    userRepository.saveUser(newUser)
-                    userRepository.saveHealthProfile(newHealthProfile)
+                    try {
+                        userRepository.saveUser(newUser)
+                        userRepository.saveHealthProfile(newHealthProfile)
 
-                    _userProfile.value = UserWithHealthProfile(
-                        id = newUser.id,
-                        name = newUser.name,
-                        email = newUser.email,
-                        healthProfile = newHealthProfile
-                    )
+                        _userProfile.value = UserWithHealthProfile(
+                            id = newUser.id,
+                            name = newUser.name,
+                            email = newUser.email,
+                            healthProfile = newHealthProfile
+                        )
+
+                        _saveSuccess.value = true
+                    } catch (e: Exception) {
+                        Log.e("ProfileViewModel", "Error creating profile: ${e.message}", e)
+                        _saveSuccess.value = false
+                    }
                 }
-
-                _saveSuccess.value = true
             } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Error in saveUserProfile: ${e.message}", e)
                 _saveSuccess.value = false
             } finally {
                 _isLoading.value = false

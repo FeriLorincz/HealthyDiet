@@ -13,6 +13,8 @@ import com.feri.healthydiet.databinding.FragmentLoginBinding
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import com.feri.healthydiet.ui.auth.AuthState
+import com.feri.healthydiet.util.Constants
+import android.content.Context
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class LoginFragment : Fragment() {
@@ -49,10 +51,16 @@ class LoginFragment : Fragment() {
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
+            val stayLoggedIn = binding.cbStayLoggedIn.isChecked
 
             if (validateInputs(email, password)) {
                 binding.progressBar.visibility = View.VISIBLE
                 viewModel.login(email, password)
+
+                // Salvează preferința utilizatorului
+                requireContext().getSharedPreferences(
+                    Constants.PREF_NAME, Context.MODE_PRIVATE
+                ).edit().putBoolean("stay_logged_in", stayLoggedIn).apply()
             }
         }
 
